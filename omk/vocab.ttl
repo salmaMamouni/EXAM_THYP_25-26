@@ -1,0 +1,49 @@
+@prefix mev: <http://example.org/mev#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+##############################
+# CLASSES
+##############################
+
+mev:Cours a rdfs:Class ;
+    rdfs:label "Cours" ;
+    rdfs:comment "Un cours du Master." .
+
+mev:Etudiant a rdfs:Class ;
+    rdfs:label "Étudiant" ;
+    rdfs:comment "Un étudiant inscrit au Master." .
+
+mev:Evaluation a rdfs:Class ;
+    rdfs:label "Évaluation" ;
+    rdfs:comment "Évaluation d’un étudiant dans un cours." .
+
+##############################
+# PROPRIÉTÉS
+##############################
+
+mev:nomEtudiant a rdf:Property ;
+    rdfs:label "Nom de l'étudiant" ;
+    rdfs:domain mev:Etudiant ;
+    rdfs:range xsd:string .
+
+mev:inscritDans a rdf:Property ;
+    rdfs:label "Inscrit dans le cours" ;
+    rdfs:domain mev:Etudiant ;
+    rdfs:range mev:Cours .
+
+mev:note a rdf:Property ;
+    rdfs:label "Note obtenue" ;
+    rdfs:domain mev:Evaluation ;
+    rdfs:range xsd:decimal .
+
+mev:evalEtudiant a rdf:Property ;
+    rdfs:label "Étudiant évalué" ;
+    rdfs:domain mev:Evaluation ;
+    rdfs:range mev:Etudiant .
+
+mev:evalCours a rdf:Property ;
+    rdfs:label "Cours évalué" ;
+    rdfs:domain mev:Evaluation ;
+    rdfs:range mev:Cours .
