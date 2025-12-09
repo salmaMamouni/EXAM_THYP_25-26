@@ -56,19 +56,25 @@
 <div id="evalContainer"></div>
 
 <script>
-
-
+// ------------------------------
+// 🔑 CONFIG API OMEKA
+// ------------------------------
+const KEY_ID = "FtmSi7I7u8zaYsBN0XXrnXeLv1JkLDS8";
+const KEY_CRED = "aVzeDDS2VcB32Dkmbj0z4g2S6qaE7Gne";
 
 const API_BASE = "http://localhost/omeka-s/api";
-const TEMPLATE_EVAL = 4;   // ID du template Évaluation dans Omeka
-const TEMPLATE_ETU  = 3;   // ID du template Étudiant
-const TEMPLATE_COURS = 2;  // ID du template Cours
 
- 
+const TEMPLATE_EVAL = 4;   // ⚠️ mets ici l’ID exact de ton template Evaluation
+const TEMPLATE_ETU  = 3;   // Étudiant
+const TEMPLATE_COURS = 2;  // Cours
 
 
+
+// ------------------------------
+// 1️⃣ Charger les étudiants (menu déroulant)
+// ------------------------------
 async function loadEtudiants() {
-    const res = await fetch(`${API_BASE}/items?resource_template_id=${TEMPLATE_ETU}`);
+    const res = await fetch(`${API_BASE}/items?resource_template_id=${TEMPLATE_ETU}&key_identity=${KEY_ID}&key_credential=${KEY_CRED}`);
     const etudiants = await res.json();
 
     let select = document.getElementById("etudiantSelect");
@@ -78,8 +84,13 @@ async function loadEtudiants() {
     });
 }
 
+
+
+// ------------------------------
+// 2️⃣ Charger les cours
+// ------------------------------
 async function loadCours() {
-    const res = await fetch(`${API_BASE}/items?resource_template_id=${TEMPLATE_COURS}`);
+    const res = await fetch(`${API_BASE}/items?resource_template_id=${TEMPLATE_COURS}&key_identity=${KEY_ID}&key_credential=${KEY_CRED}`);
     const cours = await res.json();
 
     let select = document.getElementById("coursSelect");
@@ -91,6 +102,9 @@ async function loadCours() {
 
 
 
+// ------------------------------
+// 3️⃣ Enregistrer une évaluation
+// ------------------------------
 async function setEval() {
 
     let note = document.getElementById("note").value;
@@ -99,9 +113,8 @@ async function setEval() {
 
     let data = {
         "o:resource_template": { "o:id": TEMPLATE_EVAL },
-        "o:resource_class": { "o:id": null },
 
-        "mev:note": [{
+        "mev:noteObtenue": [{
             "type": "literal",
             "@value": note
         }],
@@ -117,25 +130,37 @@ async function setEval() {
         }]
     };
 
-    const response = await fetch(`${API_BASE}/items`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-    });
+    const response = await fetch(
+        `${API_BASE}/items?key_identity=${KEY_ID}&key_credential=${KEY_CRED}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        }
+    );
 
     alert("Évaluation enregistrée !");
     getEvals();
 }
 
 
+
+// ------------------------------
+// 4️⃣ Récupérer la liste des évaluations
+// ------------------------------
 async function getEvals() {
-    const res = await fetch(`${API_BASE}/items?resource_template_id=${TEMPLATE_EVAL}`);
+    const res = await fetch(
+        `${API_BASE}/items?resource_template_id=${TEMPLATE_EVAL}&key_identity=${KEY_ID}&key_credential=${KEY_CRED}`
+    );
     const evals = await res.json();
     showEval(evals);
 }
 
+
+
+// ------------------------------
+// 5️⃣ Afficher les évaluations
+// ------------------------------
 async function showEval(list) {
 
     let container = document.getElementById("evalContainer");
@@ -144,14 +169,14 @@ async function showEval(list) {
     for (let e of list) {
 
         let id = e["o:id"];
-        let note = e["mev:note"]?.[0]?.["@value"] ?? "N/A";
+        let note = e["mev:noteObtenue"]?.[0]?.["@value"] ?? "N/A";
 
         let etudiantId = e["mev:etudiantEvalue"]?.[0]?.["value_resource_id"];
         let coursId    = e["mev:coursEvalue"]?.[0]?.["value_resource_id"];
 
-        // charger les ressources liées
-        let etudiant = await fetch(`${API_BASE}/items/${etudiantId}`).then(r => r.json());
-        let cours    = await fetch(`${API_BASE}/items/${coursId}`).then(r => r.json());
+        // Charger étudiant et cours
+        let etudiant = await fetch(`${API_BASE}/items/${etudiantId}?key_identity=${KEY_ID}&key_credential=${KEY_CRED}`).then(r => r.json());
+        let cours    = await fetch(`${API_BASE}/items/${coursId}?key_identity=${KEY_ID}&key_credential=${KEY_CRED}`).then(r => r.json());
 
         let nomEtudiant = etudiant["mev:nomEtudiant"]?.[0]?.["@value"] ?? "Sans nom";
         let nomCours = cours["dcterms:title"]?.[0]?.["@value"] ?? "Sans titre";
@@ -171,6 +196,10 @@ async function showEval(list) {
 }
 
 
+
+// ------------------------------
+// Charger tout au démarrage
+// ------------------------------
 loadEtudiants();
 loadCours();
 getEvals();
