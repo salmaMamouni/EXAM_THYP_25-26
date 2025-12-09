@@ -4,16 +4,12 @@
     <meta charset="UTF-8">
     <title>Liste des cours</title>
 
-    <!-- STYLE SIMPLE ET LISIBLE (exigence de l'examen) -->
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-
-        h2 {
-            margin-bottom: 20px;
-        }
+        h2 { margin-bottom: 20px; }
 
         #search {
             padding: 10px;
@@ -31,9 +27,11 @@
             border-radius: 6px;
             background: #f9f9f9;
         }
+        .cours-card strong { color: #333; }
 
-        .cours-card strong {
-            color: #333;
+        .student {
+            margin-left: 10px;
+            color: #555;
         }
     </style>
 </head>
@@ -41,52 +39,95 @@
 
 <h2>Liste des cours</h2>
 
-<!-- BARRE DE RECHERCHE -->
 <input type="text" id="search" placeholder="Filtrer les cours..." onkeyup="filterCours()">
 
-<!-- CONTENEUR DES COURS -->
 <div id="coursContainer"></div>
 
 <script>
-// => IMPORTANT : mets ici l'ID de TON template Cours
-const API_URL = "http://localhost/omeka-s/api/items?resource_template_id=2";
+// ----------------------------
+// CONFIGURATION API OMEKA-S
+// ----------------------------
+const KEY_ID = "FtmSi7I7u8zaYsBN0XXrnXeLv1JkLDS8";
+const KEY_CRED = "aVzeDDS2VcB32Dkmbj0z4g2S6qaE7Gne";
+
+// ID du template Cours
+const TEMPLATE_COURS = 2;
+
+// URL API complète
+const API_URL = `http://localhost/omeka-s/api/items?resource_template_id=${TEMPLATE_COURS}&key_identity=${KEY_ID}&key_credential=${KEY_CRED}`;
 
 
+// ----------------------------
+// 1) Récupération des cours
+// ----------------------------
 async function getCours() {
     try {
         const response = await fetch(API_URL);
         const data = await response.json();
         showCours(data);
-    } catch (error) {
-        console.error("Erreur API :", error);
+    } catch (e) {
+        console.error("Erreur API :", e);
     }
 }
 
-function showCours(coursList) {
+
+// ----------------------------
+// 2) Affichage des cours
+// ----------------------------
+async function showCours(coursList) {
     let container = document.getElementById("coursContainer");
     container.innerHTML = "";
 
-    coursList.forEach(cours => {
+    for (let cours of coursList) {
+
         let id = cours["o:id"];
         let titre = cours["dcterms:title"]?.[0]?.["@value"] ?? "Sans titre";
         let description = cours["dcterms:description"]?.[0]?.["@value"] ?? "Aucune description";
 
-        // Cette propriété existe dans ton vocabulaire (mais dans Etudiant)
-        let inscrits = cours["mev:inscritDansCours"] ?? [];
+        // Chercher les étudiants inscrits à ce cours
+        let students = await getEtudiantsInscrits(id);
 
-        let div = document.createElement("div");
-        div.className = "cours-card";
-        div.innerHTML = `
-            <strong>Identifiant :</strong> ${id}<br>
+        let card = document.createElement("div");
+        card.className = "cours-card";
+
+        card.innerHTML = `
+            <strong>ID :</strong> ${id}<br>
             <strong>Titre :</strong> ${titre}<br>
-            <strong>Étudiants inscrits :</strong> ${inscrits.length}<br>
+            <strong>Description :</strong> ${description}<br><br>
+            <strong>Étudiants inscrits :</strong> ${students.length}<br>
+            ${students.map(s => `<div class="student">• ${s}</div>`).join("")}
         `;
 
-        container.appendChild(div);
-    });
+        container.appendChild(card);
+    }
 }
 
 
+// ----------------------------
+// 3) Chercher les étudiants inscrits à un cours
+// ----------------------------
+async function getEtudiantsInscrits(coursId) {
+
+    const url = `http://localhost/omeka-s/api/items?resource_template_id=3&key_identity=${KEY_ID}&key_credential=${KEY_CRED}`;
+    const response = await fetch(url);
+    const etudiants = await response.json();
+
+    let inscrits = [];
+
+    etudiants.forEach(et => {
+        let inscritDans = et["mev:inscritDansLeCours"]?.[0]?.["@id"];
+        if (inscritDans && inscritDans.endsWith("/" + coursId)) {
+            inscrits.push(et["dcterms:title"]?.[0]?.["@value"] ?? "Étudiant sans nom");
+        }
+    });
+
+    return inscrits;
+}
+
+
+// ----------------------------
+// 4) Filtrage des cours
+// ----------------------------
 function filterCours() {
     let search = document.getElementById("search").value.toLowerCase();
     let cards = document.querySelectorAll(".cours-card");
@@ -98,8 +139,11 @@ function filterCours() {
     });
 }
 
-// Chargement initial
+// ----------------------------
+// Lancement initial
+// ----------------------------
 getCours();
+
 </script>
 
 </body>
