@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Évaluations</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .eval-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            width: 100%;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Créer une évaluation</h2>
+
+<label>Note :</label>
+<input type="number" id="note" min="0" max="20">
+
+<label>ID Étudiant :</label>
+<input type="number" id="etudiantId">
+
+<label>ID Cours :</label>
+<input type="number" id="coursId">
+
+<button onclick="setEval()">Enregistrer l'évaluation</button>
+
+<h2>Liste des évaluations</h2>
+<div id="evalsContainer"></div>
+
+<script>
+const API_EVALS = "http://localhost/omeka-s/api/items?resource_template_id=4"; 
+// (remplace 4 par l’ID exact de ton template Évaluation)
+
+
+async function setEval() {
+    let note = document.getElementById("note").value;
+    let etudiant = document.getElementById("etudiantId").value;
+    let cours = document.getElementById("coursId").value;
+
+    let evalData = {
+        "o:resource_template": {"o:id": 4}, // ID du template
+        "o:resource_class": {"o:id": null},
+        "mev:noteObtenue": [{"@value": note}],
+        "mev:etudiantEvalue": [{"type": "resource", "value_resource_id": etudiant}],
+        "mev:coursEvalue": [{"type": "resource", "value_resource_id": cours}]
+    };
+
+    const response = await fetch("http://localhost/omeka-s/api/items", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + "TON_API_KEY_ICI"
+        },
+        body: JSON.stringify(evalData)
+    });
+
+    if (response.ok) {
+        alert("Évaluation enregistrée !");
+        getEvals();
+    } else {
+        alert("Erreur lors de l’enregistrement");
+    }
+}
+
+/
+async function getEvals() {
+    const response = await fetch(API_EVALS);
+    const data = await response.json();
+    showEval(data);
+}
+
+
+function showEval(list) {
+    let container = document.getElementById("evalsContainer");
+    container.innerHTML = "";
+
+    list.forEach(ev => {
+        let id = ev["o:id"];
+        let note = ev["mev:noteObtenue"]?.[0]?.["@value"] ?? "—";
+        let etudiant = ev["mev:etudiantEvalue"]?.[0]?.["value_resource_id"] ?? "—";
+        let cours = ev["mev:coursEvalue"]?.[0]?.["value_resource_id"] ?? "—";
+
+        let card = document.createElement("div");
+        card.className = "eval-card";
+        card.innerHTML = `
+            <strong>ID Évaluation :</strong> ${id}<br>
+            <strong>Note :</strong> ${note}<br>
+            <strong>Étudiant :</strong> ${etudiant}<br>
+            <strong>Cours :</strong> ${cours}<br>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+// Charger les évaluations au départ
+getEvals();
+</script>
+
+</body>
+</html>
