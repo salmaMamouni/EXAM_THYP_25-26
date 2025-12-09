@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Liste des cours</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 20px;
+        }
+        .cours-card {
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            background: #f9f9f9;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Liste des cours</h2>
+
+<input type="text" id="search" placeholder="Filtrer les cours..." onkeyup="filterCours()">
+
+<div id="coursContainer"></div>
+
+<script>
+const API_URL = "http://localhost/omeka-s/api/items?resource_template_id=2"; 
+
+
+
+async function getCours() {
+    const response = await fetch(API_URL);
+    const data = await response.json();
+    showCours(data);
+}
+
+
+function showCours(coursList) {
+    let container = document.getElementById("coursContainer");
+    container.innerHTML = "";
+
+    coursList.forEach(cours => {
+        let titre = cours["dcterms:title"]?.[0]?.["@value"] ?? "Sans titre";
+        let id = cours["o:id"];
+        let description = cours["dcterms:description"]?.[0]?.["@value"] ?? "Aucune description";
+        let inscrits = cours["mev:inscritDansCours"] ?? [];
+
+        let div = document.createElement("div");
+        div.className = "cours-card";
+        div.innerHTML = `
+            <strong>Identifiant :</strong> ${id}<br>
+            <strong>Titre :</strong> ${titre}<br>
+            <strong>Étudiants inscrits :</strong> ${inscrits.length}
+        `;
+        container.appendChild(div);
+    });
+}
+
+
+function filterCours() {
+    let search = document.getElementById("search").value.toLowerCase();
+    let cards = document.querySelectorAll(".cours-card");
+
+    cards.forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(search)
+            ? "block"
+            : "none";
+    });
+}
+
+getCours();
+</script>
+
+</body>
+</html>
