@@ -51,9 +51,7 @@
 // => IMPORTANT : mets ici l'ID de TON template Cours
 const API_URL = "http://localhost/omeka-s/api/items?resource_template_id=2";
 
-/* ----------------------------------------------------------
-   1️⃣ Fonction pour récupérer la liste des cours depuis Omeka
------------------------------------------------------------*/
+
 async function getCours() {
     try {
         const response = await fetch(API_URL);
@@ -64,9 +62,6 @@ async function getCours() {
     }
 }
 
-/* ----------------------------------------------------------
-   2️⃣ Fonction d'affichage des cours
------------------------------------------------------------*/
 function showCours(coursList) {
     let container = document.getElementById("coursContainer");
     container.innerHTML = "";
@@ -91,9 +86,7 @@ function showCours(coursList) {
     });
 }
 
-/* ----------------------------------------------------------
-   3️⃣ Filtrer les cours côté client
------------------------------------------------------------*/
+
 function filterCours() {
     let search = document.getElementById("search").value.toLowerCase();
     let cards = document.querySelectorAll(".cours-card");
