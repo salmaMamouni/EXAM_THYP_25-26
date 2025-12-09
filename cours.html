@@ -3,22 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Liste des cours</title>
+
+    <!-- STYLE SIMPLE ET LISIBLE (exigence de l'examen) -->
     <style>
         body {
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             margin: 20px;
         }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        #search {
+            padding: 10px;
+            width: 100%;
+            font-size: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
         .cours-card {
             border: 1px solid #ddd;
-            padding: 12px;
-            margin-bottom: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
             border-radius: 6px;
             background: #f9f9f9;
         }
-        input {
-            padding: 8px;
-            width: 100%;
-            margin-bottom: 20px;
+
+        .cours-card strong {
+            color: #333;
         }
     </style>
 </head>
@@ -26,30 +41,42 @@
 
 <h2>Liste des cours</h2>
 
+<!-- BARRE DE RECHERCHE -->
 <input type="text" id="search" placeholder="Filtrer les cours..." onkeyup="filterCours()">
 
+<!-- CONTENEUR DES COURS -->
 <div id="coursContainer"></div>
 
 <script>
-const API_URL = "http://localhost/omeka-s/api/items?resource_template_id=2"; 
+// => IMPORTANT : mets ici l'ID de TON template Cours
+const API_URL = "http://localhost/omeka-s/api/items?resource_template_id=2";
 
-
-
+/* ----------------------------------------------------------
+   1️⃣ Fonction pour récupérer la liste des cours depuis Omeka
+-----------------------------------------------------------*/
 async function getCours() {
-    const response = await fetch(API_URL);
-    const data = await response.json();
-    showCours(data);
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        showCours(data);
+    } catch (error) {
+        console.error("Erreur API :", error);
+    }
 }
 
-
+/* ----------------------------------------------------------
+   2️⃣ Fonction d'affichage des cours
+-----------------------------------------------------------*/
 function showCours(coursList) {
     let container = document.getElementById("coursContainer");
     container.innerHTML = "";
 
     coursList.forEach(cours => {
-        let titre = cours["dcterms:title"]?.[0]?.["@value"] ?? "Sans titre";
         let id = cours["o:id"];
+        let titre = cours["dcterms:title"]?.[0]?.["@value"] ?? "Sans titre";
         let description = cours["dcterms:description"]?.[0]?.["@value"] ?? "Aucune description";
+
+        // Cette propriété existe dans ton vocabulaire (mais dans Etudiant)
         let inscrits = cours["mev:inscritDansCours"] ?? [];
 
         let div = document.createElement("div");
@@ -57,13 +84,16 @@ function showCours(coursList) {
         div.innerHTML = `
             <strong>Identifiant :</strong> ${id}<br>
             <strong>Titre :</strong> ${titre}<br>
-            <strong>Étudiants inscrits :</strong> ${inscrits.length}
+            <strong>Étudiants inscrits :</strong> ${inscrits.length}<br>
         `;
+
         container.appendChild(div);
     });
 }
 
-
+/* ----------------------------------------------------------
+   3️⃣ Filtrer les cours côté client
+-----------------------------------------------------------*/
 function filterCours() {
     let search = document.getElementById("search").value.toLowerCase();
     let cards = document.querySelectorAll(".cours-card");
@@ -75,6 +105,7 @@ function filterCours() {
     });
 }
 
+// Chargement initial
 getCours();
 </script>
 
